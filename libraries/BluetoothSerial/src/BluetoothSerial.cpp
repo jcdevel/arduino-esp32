@@ -501,7 +501,7 @@ static bool _init_bt(const char *deviceName)
         }
     }
 
-    if (_isMaster && esp_bt_gap_register_callback(esp_bt_gap_cb) != ESP_OK) {
+    if (esp_bt_gap_register_callback(esp_bt_gap_cb) != ESP_OK) {
         log_e("gap register failed");
         return false;
     }
