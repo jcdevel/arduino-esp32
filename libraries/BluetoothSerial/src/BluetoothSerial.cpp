@@ -50,6 +50,7 @@ static SemaphoreHandle_t _spp_tx_done = NULL;
 static TaskHandle_t _spp_task_handle = NULL;
 static EventGroupHandle_t _spp_event_group = NULL;
 static boolean secondConnectionAttempt;
+static esp_bt_gap_cb_t custom_gap_callback = NULL;
 static esp_spp_cb_t * custom_spp_callback = NULL;
 static BluetoothSerialDataCb custom_data_callback = NULL;
 
@@ -404,6 +405,9 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
             } else {
                 log_e("authentication failed, status:%d", param->auth_cmpl.stat);
             }
+            if (custom_gap_callback != NULL) {
+                (*custom_gap_callback)(event, param);
+            }
             break;
 
         case ESP_BT_GAP_PIN_REQ_EVT:
@@ -423,8 +427,14 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
             break;
        
         case ESP_BT_GAP_CFM_REQ_EVT:
-            log_i("ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
-            esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
+            log_i("ESP_BT_GAP_CFM_REQ_EVT");
+            if (custom_gap_callback != NULL) {
+                (*custom_gap_callback)(event, param);
+            }
+            else {
+                log_i("ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %d", param->cfm_req.num_val);
+                esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
+            }
             break;
 
         case ESP_BT_GAP_KEY_NOTIF_EVT:
@@ -674,6 +684,12 @@ void BluetoothSerial::end()
     _stop_bt();
 }
 
+esp_err_t BluetoothSerial::register_gap_callback(esp_bt_gap_cb_t callback)
+{
+    custom_gap_callback = callback;
+    return ESP_OK;
+}
+
 esp_err_t BluetoothSerial::register_callback(esp_spp_cb_t * callback)
 {
     custom_spp_callback = callback;
@@ -684,6 +700,13 @@ esp_err_t BluetoothSerial::register_callback(esp_spp_cb_t * callback)
 void BluetoothSerial::enableSSP() {
     _enableSSP = true;
 }
+
+void BluetoothSerial::confirmSSP(esp_bd_addr_t bda) {
+    if (_enableSSP) {
+        esp_bt_gap_ssp_confirm_reply(bda, true);
+    }
+}
+
 /*
      * Set default parameters for Legacy Pairing
      * Use fixed pin code

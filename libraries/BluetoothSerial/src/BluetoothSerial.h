@@ -21,6 +21,8 @@
 
 #include "Arduino.h"
 #include "Stream.h"
+#include <esp_bt_defs.h>
+#include <esp_gap_bt_api.h>
 #include <esp_spp_api.h>
 #include <functional>
 
@@ -43,9 +45,11 @@ class BluetoothSerial: public Stream
         void flush();
         void end(void);
         void onData(BluetoothSerialDataCb cb);
+        esp_err_t register_gap_callback(esp_bt_gap_cb_t callback);
         esp_err_t register_callback(esp_spp_cb_t * callback);
 
         void enableSSP();
+        void confirmSSP(esp_bd_addr_t bda);
         bool setPin(const char *pin);
         bool connect(String remoteName);
         bool connect(uint8_t remoteAddress[]);
