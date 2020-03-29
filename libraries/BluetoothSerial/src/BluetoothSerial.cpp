@@ -398,6 +398,7 @@ static void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
             break;
 
         case ESP_BT_GAP_AUTH_CMPL_EVT:
+            log_i("ESP_BT_GAP_AUTH_CMPL_EVT");
             if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS) {
                 log_v("authentication success: %s", param->auth_cmpl.device_name);
             } else {
